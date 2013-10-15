@@ -18,6 +18,9 @@
 
 require 'fileutils'
 require 'json'
+require 'chef'
+require 'chef/knife'
+require 'chef/knife/cookbook_metadata'
 
 module Kitchen
 
@@ -161,7 +164,16 @@ module Kitchen
           raise UserError, "Cookbooks could not be found"
         end
 
+        generate_metadata_json
         filter_only_cookbook_files
+      end
+
+      def generate_metadata_json
+        Dir.glob(File.join(tmpbooks_dir, "*")).each do |cookbook|
+          if File.exists?("#{cookbook}/metadata.rb")
+            Chef::Knife::CookbookMetadata.new.generate_metadata_from_file(File.basename(cookbook), "#{cookbook}/metadata.rb") unless File.exists?("#{cookbook}/metadata.json")
+          end
+        end
       end
 
       def filter_only_cookbook_files
